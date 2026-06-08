@@ -182,7 +182,13 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-4 text-xs text-amber-800 space-y-1">
+          <p className="font-semibold mb-1.5">Credenciales de prueba</p>
+          <p><span className="font-medium">Admin:</span> admin@demo.com / admin123</p>
+          <p><span className="font-medium">Usuario:</span> user@demo.com / user123</p>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground mt-4">
           <Link href="/pets" className="hover:text-primary-500 transition-colors">
             {t.login.continueAsGuest}
           </Link>
