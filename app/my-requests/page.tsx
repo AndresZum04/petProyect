@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, Clock, CheckCircle2, XCircle, PawPrint, Loader2, Heart } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, PawPrint, Loader2, Heart, LogOut, User } from 'lucide-react'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -22,6 +22,7 @@ export default function MyRequestsPage() {
   const [requests, setRequests] = useState<AdoptionRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
+  const [userName, setUserName] = useState('')
 
   useEffect(() => { loadRequests() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -32,6 +33,7 @@ export default function MyRequestsPage() {
     if (!user) { router.push('/login'); return }
 
     setUserEmail(user.email || '')
+    setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario')
 
     const { data } = await supabase
       .from('adoption_requests')
@@ -43,24 +45,48 @@ export default function MyRequestsPage() {
     setLoading(false)
   }
 
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
   return (
     <div className="min-h-dvh bg-background">
       <header className="glass border-b border-border sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center gap-3">
-          <Link href="/pets" className="text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="font-heading font-bold text-lg text-foreground">Mis Solicitudes</h1>
+        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="font-heading font-bold text-lg text-foreground">Mi Perfil</h1>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-red-500 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Cerrar sesión
+          </button>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
+      <main className="max-w-2xl mx-auto px-4 py-6 pb-28">
+        {/* Info del usuario */}
+        <div className="bg-white rounded-2xl shadow-card p-5 flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center flex-none">
+            <User className="w-7 h-7 text-primary-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-heading font-bold text-foreground truncate">{userName}</p>
+            <p className="text-muted-foreground text-sm truncate">{userEmail}</p>
+          </div>
+        </div>
+
+        {/* Solicitudes */}
+        <h2 className="font-heading font-semibold text-base text-foreground mb-3">Mis Solicitudes</h2>
+
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
           </div>
         ) : requests.length === 0 ? (
-          <div className="text-center py-20">
+          <div className="text-center py-16">
             <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
               <PawPrint className="w-8 h-8 text-primary-400" />
             </div>
@@ -72,7 +98,6 @@ export default function MyRequestsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            <p className="text-xs text-muted-foreground mb-4">{userEmail} · {requests.length} solicitud{requests.length !== 1 ? 'es' : ''}</p>
             {requests.map(req => {
               const config = STATUS_CONFIG[req.status]
               const StatusIcon = config.icon
@@ -104,6 +129,15 @@ export default function MyRequestsPage() {
             })}
           </div>
         )}
+
+        {/* Botón de cerrar sesión al final */}
+        <button
+          onClick={handleLogout}
+          className="w-full mt-8 flex items-center justify-center gap-2 border border-red-200 text-red-500 hover:bg-red-50 py-3 rounded-2xl text-sm font-medium transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Cerrar sesión
+        </button>
       </main>
     </div>
   )
