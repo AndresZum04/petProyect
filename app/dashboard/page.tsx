@@ -34,6 +34,7 @@ const STATUS_BADGE: Record<string, string> = {
 export default function DashboardPage() {
   const router = useRouter()
   const t = useTranslations()
+  const [authorized, setAuthorized] = useState(false)
   const { role: demoRole, logout: demoLogout } = useDemoAuthStore()
   const [pets, setPets] = useState<Pet[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,7 +54,8 @@ export default function DashboardPage() {
     setLoading(true)
     if (!isSupabaseConfigured) {
       if (!demoRole) { router.push('/login'); return }
-      if (demoRole !== 'admin') { router.push('/pets'); return }
+      if (demoRole !== 'admin') { router.replace('/pets'); return }
+      setAuthorized(true)
       setIsDemo(true)
       setPets(DEMO_PETS)
       setLoading(false)
@@ -65,12 +67,13 @@ export default function DashboardPage() {
       if (!user) { router.push('/login'); return }
 
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      if (profile?.role !== 'admin') { router.push('/pets'); return }
+      if (profile?.role !== 'admin') { router.replace('/pets'); return }
 
+      setAuthorized(true)
       const { data, error } = await supabase.from('pets').select('*').order('created_at', { ascending: false })
       if (error || !data) { setIsDemo(true); setPets(DEMO_PETS) } else { setPets(data) }
     } catch {
-      setIsDemo(true); setPets(DEMO_PETS)
+      router.replace('/pets')
     } finally {
       setLoading(false)
     }
@@ -211,6 +214,14 @@ export default function DashboardPage() {
   ]
 
   const inputCls = 'w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white'
+
+  if (!authorized) {
+    return (
+      <div className="min-h-dvh bg-background flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-dvh bg-background">

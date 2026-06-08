@@ -47,6 +47,7 @@ export default function RequestsPage() {
   const [requests, setRequests] = useState<AdoptionRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [isDemo, setIsDemo] = useState(false)
+  const [authorized, setAuthorized] = useState(false)
   const [actioning, setActioning] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
 
@@ -56,7 +57,8 @@ export default function RequestsPage() {
     setLoading(true)
     if (!isSupabaseConfigured) {
       if (!demoRole) { router.push('/login'); return }
-      if (demoRole !== 'admin') { router.push('/pets'); return }
+      if (demoRole !== 'admin') { router.replace('/pets'); return }
+      setAuthorized(true)
       setIsDemo(true)
       setRequests(DEMO_REQUESTS)
       setLoading(false)
@@ -68,7 +70,8 @@ export default function RequestsPage() {
       if (!user) { router.push('/login'); return }
 
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      if (profile?.role !== 'admin') { router.push('/pets'); return }
+      if (profile?.role !== 'admin') { router.replace('/pets'); return }
+      setAuthorized(true)
 
       const { data, error } = await supabase
         .from('adoption_requests')
@@ -103,6 +106,14 @@ export default function RequestsPage() {
     } finally {
       setActioning(null)
     }
+  }
+
+  if (!authorized) {
+    return (
+      <div className="min-h-dvh bg-background flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+      </div>
+    )
   }
 
   const pending = requests.filter(r => r.status === 'pending')
