@@ -4,13 +4,14 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Plus, Edit2, Trash2, Eye, ClipboardList, LogOut, PawPrint, Loader2, X, CheckCircle2, AlertCircle, Upload, ImagePlus } from 'lucide-react'
+import { Plus, Edit2, Trash2, Eye, ClipboardList, LogOut, PawPrint, Loader2, X, CheckCircle2, AlertCircle, Upload, ImagePlus, Building2, Phone, Mail, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import { SPECIES_COLORS, cn } from '@/lib/utils'
 import { useTranslations } from '@/hooks/useTranslations'
 import useDemoAuthStore from '@/store/useDemoAuthStore'
+import useVetStore from '@/store/useVetStore'
 import type { Pet } from '@/types'
 
 const DEMO_PETS: Pet[] = [
@@ -47,6 +48,11 @@ export default function DashboardPage() {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const { vets, addVet } = useVetStore()
+  const [showVetForm, setShowVetForm] = useState(false)
+  const [savingVet, setSavingVet] = useState(false)
+  const [vetForm, setVetForm] = useState({ name: '', city: '', phone: '', email: '', description: '' })
 
   useEffect(() => { loadDashboard() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -202,6 +208,21 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleSaveVet(e: React.FormEvent) {
+    e.preventDefault()
+    setSavingVet(true)
+    try {
+      addVet({ name: vetForm.name, city: vetForm.city, phone: vetForm.phone, email: vetForm.email, description: vetForm.description })
+      toast.success('¡Clínica veterinaria agregada!')
+      setVetForm({ name: '', city: '', phone: '', email: '', description: '' })
+      setShowVetForm(false)
+    } catch {
+      toast.error('Error al guardar. Intenta de nuevo.')
+    } finally {
+      setSavingVet(false)
+    }
+  }
+
   async function handleLogout() {
     if (isSupabaseConfigured) { const supabase = createClient(); await supabase.auth.signOut() } else { demoLogout() }
     router.push('/')
@@ -247,13 +268,6 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {isDemo && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 flex items-center gap-2 text-amber-800 text-sm">
-            <AlertCircle className="w-4 h-4 flex-none" />
-            {t.dashboard.demoNotice}
-          </div>
-        )}
-
         <div className="grid grid-cols-3 gap-4 mb-8">
           {stats.map(({ label, value, color }) => (
             <div key={label} className="bg-white rounded-2xl p-4 shadow-card text-center">
@@ -321,7 +335,107 @@ export default function DashboardPage() {
             )}
           </div>
         )}
+
+        {/* Sección Veterinarias */}
+        <div className="mt-10">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-heading font-bold text-xl text-foreground">Clínicas Veterinarias</h2>
+            <button
+              onClick={() => setShowVetForm(true)}
+              className="flex items-center gap-2 bg-gradient-amber text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-warm hover:shadow-warm-md transition-all"
+            >
+              <Plus className="w-4 h-4" /> Agregar Clínica
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {vets.map(vet => (
+              <div key={vet.id} className="bg-white rounded-2xl shadow-card p-4 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center flex-none">
+                  <Building2 className="w-5 h-5 text-primary-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-heading font-bold text-foreground">{vet.name}</h3>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="w-3 h-3" /> {vet.city}
+                    </span>
+                    {vet.phone && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Phone className="w-3 h-3" /> {vet.phone}
+                      </span>
+                    )}
+                    {vet.email && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Mail className="w-3 h-3" /> {vet.email}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <Link
+                  href={`/vets/${vet.id}`}
+                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors flex-none"
+                >
+                  <Eye className="w-4 h-4" />
+                </Link>
+              </div>
+            ))}
+            {vets.length === 0 && (
+              <div className="text-center py-12">
+                <Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="font-heading font-semibold text-foreground mb-1">Sin clínicas registradas</p>
+                <p className="text-muted-foreground text-sm">Agrega la primera clínica veterinaria.</p>
+              </div>
+            )}
+          </div>
+        </div>
       </main>
+
+      {/* Modal agregar veterinaria */}
+      {showVetForm && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end md:items-center justify-center p-0 md:p-4" onClick={e => { if (e.target === e.currentTarget) setShowVetForm(false) }}>
+          <div className="bg-white w-full max-w-lg rounded-t-3xl md:rounded-3xl shadow-warm-lg max-h-[90dvh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-border px-6 py-4 flex items-center justify-between rounded-t-3xl">
+              <h2 className="font-heading font-bold text-lg">Nueva Clínica Veterinaria</h2>
+              <button onClick={() => setShowVetForm(false)} className="p-2 text-muted-foreground hover:text-foreground rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSaveVet} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Nombre de la clínica *</label>
+                <input required value={vetForm.name} onChange={e => setVetForm(p => ({ ...p, name: e.target.value }))} placeholder="Centro Veterinario Los Yoses" className={inputCls} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Ciudad *</label>
+                  <input required value={vetForm.city} onChange={e => setVetForm(p => ({ ...p, city: e.target.value }))} placeholder="San José" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Teléfono</label>
+                  <input value={vetForm.phone} onChange={e => setVetForm(p => ({ ...p, phone: e.target.value }))} placeholder="+506 2224-5678" className={inputCls} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Correo electrónico</label>
+                <input type="email" value={vetForm.email} onChange={e => setVetForm(p => ({ ...p, email: e.target.value }))} placeholder="info@clinica.cr" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Descripción</label>
+                <textarea value={vetForm.description} onChange={e => setVetForm(p => ({ ...p, description: e.target.value }))} rows={3} placeholder="Describe la clínica, su misión y servicios..." className={cn(inputCls, 'resize-none')} />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowVetForm(false)} className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={savingVet} className="flex-1 flex items-center justify-center gap-2 bg-gradient-amber text-white py-3 rounded-xl text-sm font-semibold shadow-warm disabled:opacity-70">
+                  {savingVet ? <><Loader2 className="w-4 h-4 animate-spin" /> Guardando…</> : <><CheckCircle2 className="w-4 h-4" /> Agregar Clínica</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal del formulario */}
       {showForm && (
