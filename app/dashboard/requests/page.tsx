@@ -15,20 +15,20 @@ import type { AdoptionRequest } from '@/types'
 
 const DEMO_REQUESTS: AdoptionRequest[] = [
   {
-    id: 'req-1', pet_id: 'demo-1', full_name: 'Sofia Martinez', email: 'sofia@example.com', phone: '+1 555 1234',
-    housing_type: 'house', experience: 'experienced', motivation: 'We have a big yard and lots of love to give. We had a Golden Retriever for 12 years and recently lost her.',
+    id: 'req-1', pet_id: 'demo-1', full_name: 'Sofía Quesada', email: 'sofia.quesada@gmail.com', phone: '+506 8834-1276',
+    housing_type: 'house', experience: 'experienced', motivation: 'Tenemos un jardín grande en Escazú y mucho amor que dar. Tuvimos un Golden Retriever por 12 años y lo perdimos recientemente. Estamos listos para volver a darle un hogar a un perrito.',
     status: 'pending', created_at: new Date(Date.now() - 3600000).toISOString(),
     pets: { name: 'Luna', photos: ['https://images.unsplash.com/photo-1552053831-71594a27632d?w=100&q=80'] },
   },
   {
-    id: 'req-2', pet_id: 'demo-2', full_name: 'Carlos Rivera', email: 'carlos@example.com', phone: '+1 555 5678',
-    housing_type: 'apartment', experience: 'some', motivation: 'I work from home and would love the company. I am patient and ready for a cat.',
+    id: 'req-2', pet_id: 'demo-2', full_name: 'Carlos Jiménez', email: 'carlos.jimenez@hotmail.com', phone: '+506 7721-5890',
+    housing_type: 'apartment', experience: 'some', motivation: 'Trabajo desde casa en Heredia y me encantaría tener compañía. Soy paciente y ya me informé sobre el cuidado de gatos. Tengo todo lo necesario listo.',
     status: 'pending', created_at: new Date(Date.now() - 7200000).toISOString(),
     pets: { name: 'Mochi', photos: ['https://images.unsplash.com/photo-1574158622682-e40e69881006?w=100&q=80'] },
   },
   {
-    id: 'req-3', pet_id: 'demo-3', full_name: 'Ana Gutiérrez', email: 'ana@example.com', phone: '+1 555 9012',
-    housing_type: 'house', experience: 'experienced', motivation: 'Bruno sounds perfect for our calm family lifestyle.',
+    id: 'req-3', pet_id: 'demo-3', full_name: 'Ana Brenes', email: 'ana.brenes@gmail.com', phone: '+506 6612-9034',
+    housing_type: 'house', experience: 'experienced', motivation: 'Bruno es perfecto para nuestro estilo de vida familiar tranquilo en Cartago. Tenemos espacio y experiencia con bulldogs.',
     status: 'approved', created_at: new Date(Date.now() - 86400000).toISOString(),
     pets: { name: 'Bruno', photos: ['https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=100&q=80'] },
   },

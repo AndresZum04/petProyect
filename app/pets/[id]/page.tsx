@@ -14,8 +14,8 @@ const DEMO_PETS: Record<string, Pet & { story: string; rescue_story: string; hea
       'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80',
       'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&q=80',
     ],
-    story: 'Luna fue encontrada deambulando cerca de la carretera con un collar improvisado y sin microchip. A pesar de su difícil comienzo, saluda a cada visitante con su característico giro de cola y enamora a todos en segundos. Aprendió cinco comandos en solo dos semanas de hogar temporal — claramente alguien la amó y le enseñó bien.',
-    rescue_story: 'Luna fue rescatada el 15 de junio de 2024 a la orilla de la Carretera 35. Un conductor amable la vio y llamó a nuestra línea de rescate. Estaba desnutrida pero de buen ánimo. Tras 3 meses de hogar temporal, está lista para su hogar para siempre.',
+    story: 'Luna fue encontrada deambulando cerca de la autopista en Escazú con un collar improvisado y sin microchip. A pesar de su difícil comienzo, saluda a cada visitante con su característico giro de cola y enamora a todos en segundos. Aprendió cinco comandos en solo dos semanas de hogar temporal — claramente alguien la amó y le enseñó bien.',
+    rescue_story: 'Luna fue rescatada el 15 de junio de 2024 a la orilla de la Ruta 27 cerca de Ciudad Colón. Un conductor amable la vio y llamó a nuestra línea de rescate. Estaba desnutrida pero de buen ánimo. Tras 3 meses de hogar temporal en San José, está lista para su hogar para siempre.',
     health_notes: 'Completamente vacunada, esterilizada y con microchip. Salud excelente. Pasa todas las pruebas de temperamento con honores.',
     vaccines: [
       { name: 'Rabia', date: 'Jul 2024' },
