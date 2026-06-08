@@ -98,7 +98,7 @@ const useVetStore = create<VetStore>()(
         set({ vetPets: [...get().vetPets, pet] })
       },
     }),
-    { name: 'petconnect-vets' }
+    { name: 'petconnect-vets-v2' }
   )
 )
 
