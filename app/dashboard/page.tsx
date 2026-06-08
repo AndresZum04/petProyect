@@ -53,6 +53,7 @@ export default function DashboardPage() {
     setLoading(true)
     if (!isSupabaseConfigured) {
       if (!demoRole) { router.push('/login'); return }
+      if (demoRole !== 'admin') { router.push('/pets'); return }
       setIsDemo(true)
       setPets(DEMO_PETS)
       setLoading(false)
@@ -62,6 +63,10 @@ export default function DashboardPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
+
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      if (profile?.role !== 'admin') { router.push('/pets'); return }
+
       const { data, error } = await supabase.from('pets').select('*').order('created_at', { ascending: false })
       if (error || !data) { setIsDemo(true); setPets(DEMO_PETS) } else { setPets(data) }
     } catch {

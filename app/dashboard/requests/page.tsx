@@ -56,6 +56,7 @@ export default function RequestsPage() {
     setLoading(true)
     if (!isSupabaseConfigured) {
       if (!demoRole) { router.push('/login'); return }
+      if (demoRole !== 'admin') { router.push('/pets'); return }
       setIsDemo(true)
       setRequests(DEMO_REQUESTS)
       setLoading(false)
@@ -65,6 +66,9 @@ export default function RequestsPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
+
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      if (profile?.role !== 'admin') { router.push('/pets'); return }
 
       const { data, error } = await supabase
         .from('adoption_requests')
