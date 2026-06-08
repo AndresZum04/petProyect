@@ -67,14 +67,10 @@ export default function LandingPage() {
               {t.landing.subtitle}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+            <div className="flex justify-center md:justify-start">
               <Link href="/pets" className="inline-flex items-center justify-center gap-2 bg-gradient-amber text-white font-semibold text-base px-7 py-4 rounded-full shadow-warm-md hover:shadow-warm-lg transition-all hover:-translate-y-0.5">
                 <Heart className="w-5 h-5" />
                 {t.landing.ctaPrimary}
-              </Link>
-              <Link href="/pets" className="inline-flex items-center justify-center gap-2 bg-white text-foreground font-semibold text-base px-7 py-4 rounded-full shadow-warm border border-border hover:shadow-warm-md transition-all">
-                <Search className="w-5 h-5" />
-                {t.landing.ctaSecondary}
               </Link>
             </div>
 
