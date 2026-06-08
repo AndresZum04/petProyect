@@ -15,18 +15,38 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [supabaseUser, setSupabaseUser] = useState<{ email?: string } | null>(null)
+  const [supabaseRole, setSupabaseRole] = useState<string | null>(null)
   const { role: demoRole, logout: demoLogout } = useDemoAuthStore()
   const t = useTranslations()
 
   const isLoggedIn = isSupabaseConfigured ? !!supabaseUser : !!demoRole
-  const isAdmin = isSupabaseConfigured ? !!supabaseUser : demoRole === 'admin'
+  const isAdmin = isSupabaseConfigured ? supabaseRole === 'admin' : demoRole === 'admin'
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setSupabaseUser(data.user))
+
+    async function loadUser() {
+      const { data } = await supabase.auth.getUser()
+      setSupabaseUser(data.user)
+      if (data.user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
+        setSupabaseRole(profile?.role ?? 'user')
+      } else {
+        setSupabaseRole(null)
+      }
+    }
+
+    loadUser()
+
     const { data: sub } = supabase.auth.onAuthStateChange((_, session) => {
       setSupabaseUser(session?.user ?? null)
+      if (session?.user) {
+        supabase.from('profiles').select('role').eq('id', session.user.id).single()
+          .then(({ data: profile }) => setSupabaseRole(profile?.role ?? 'user'))
+      } else {
+        setSupabaseRole(null)
+      }
     })
     return () => sub.subscription.unsubscribe()
   }, [])
