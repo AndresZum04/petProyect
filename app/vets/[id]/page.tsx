@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, MapPin, Phone, Mail, Users, PawPrint, Plus, Loader2, CheckCircle2, UserPlus, Stethoscope } from 'lucide-react'
+import { ArrowLeft, MapPin, Phone, Mail, Users, PawPrint, Plus, Loader2, CheckCircle2, UserPlus, Stethoscope, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/hooks/useTranslations'
+import { createClient, isSupabaseConfigured } from '@/lib/supabase'
 import useVetStore from '@/store/useVetStore'
+import useDemoAuthStore from '@/store/useDemoAuthStore'
 import Navbar from '@/components/Navbar'
 import MobileNav from '@/components/MobileNav'
 
@@ -16,28 +18,75 @@ export default function VetDetailPage() {
   const { id } = useParams<{ id: string }>()
   const t = useTranslations()
   const { vets, rescuers, vetPets, addRescuer, addVetPet } = useVetStore()
+  const { role: demoRole } = useDemoAuthStore()
 
   const vet = vets.find(v => v.id === id)
   const myRescuers = rescuers.filter(r => r.vet_id === id)
   const myPets = vetPets.filter(p => p.vet_id === id)
 
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [currentUserName, setCurrentUserName] = useState('')
   const [joinOpen, setJoinOpen] = useState(false)
   const [addPetOpen, setAddPetOpen] = useState(false)
   const [joinLoading, setJoinLoading] = useState(false)
   const [addPetLoading, setAddPetLoading] = useState(false)
-
   const [joinForm, setJoinForm] = useState({ name: '', role: 'rescuer' })
   const [petForm, setPetForm] = useState({ name: '', species: 'dog', age_label: '', description: '', photoUrl: '' })
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setIsLoggedIn(!!demoRole)
+      setIsAdmin(demoRole === 'admin')
+      return
+    }
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return
+      setIsLoggedIn(true)
+      setCurrentUserName(data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || '')
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
+      setIsAdmin(profile?.role === 'admin')
+    })
+  }, [demoRole])
+
+  // Pre-rellenar nombre si está logueado
+  useEffect(() => {
+    if (currentUserName && !joinForm.name) {
+      setJoinForm(p => ({ ...p, name: currentUserName }))
+    }
+  }, [currentUserName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault()
     if (!joinForm.name) return
     setJoinLoading(true)
-    await new Promise(r => setTimeout(r, 600))
-    addRescuer({ vet_id: id, name: joinForm.name, role: (t.vets.join.roles as Record<string, string>)[joinForm.role] })
+
+    const roleName = (t.vets.join.roles as Record<string, string>)[joinForm.role]
+
+    if (!isSupabaseConfigured) {
+      await new Promise(r => setTimeout(r, 600))
+      addRescuer({ vet_id: id, name: joinForm.name, role: roleName })
+    } else {
+      try {
+        const supabase = createClient()
+        const { error } = await supabase.from('rescuers').insert({
+          vet_id: id,
+          name: joinForm.name,
+          role: roleName,
+        })
+        if (error) throw error
+        addRescuer({ vet_id: id, name: joinForm.name, role: roleName })
+      } catch {
+        toast.error('Error al enviar la solicitud')
+        setJoinLoading(false)
+        return
+      }
+    }
+
     setJoinLoading(false)
     setJoinOpen(false)
-    setJoinForm({ name: '', role: 'rescuer' })
+    setJoinForm(p => ({ ...p, role: 'rescuer' }))
     toast.success(t.vets.join.success)
   }
 
@@ -77,18 +126,15 @@ export default function VetDetailPage() {
     )
   }
 
-  const speciesOptions = [
-    { value: 'dog', label: (t.browse.speciesLabel as Record<string, string>)['dog'] },
-    { value: 'cat', label: (t.browse.speciesLabel as Record<string, string>)['cat'] },
-    { value: 'bird', label: (t.browse.speciesLabel as Record<string, string>)['bird'] },
-    { value: 'rabbit', label: (t.browse.speciesLabel as Record<string, string>)['rabbit'] },
-    { value: 'other', label: (t.browse.speciesLabel as Record<string, string>)['other'] },
-  ]
+  const speciesOptions = ['dog','cat','bird','rabbit','other'].map(s => ({
+    value: s, label: (t.browse.speciesLabel as Record<string,string>)[s]
+  }))
+
+  const inputCls = 'w-full px-3 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400'
 
   return (
     <div className="min-h-dvh bg-background">
       <Navbar />
-
       <main className="pt-16 pb-24 md:pb-16">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <Link href="/vets" className="inline-flex items-center gap-1.5 text-muted-foreground text-sm mb-5 hover:text-foreground transition-colors">
@@ -104,27 +150,21 @@ export default function VetDetailPage() {
               <div className="flex-1 min-w-0">
                 <h1 className="font-heading font-extrabold text-xl text-foreground mb-1">{vet.name}</h1>
                 <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-3">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {vet.city}
+                  <MapPin className="w-3.5 h-3.5" /> {vet.city}
                 </div>
-                {vet.description && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">{vet.description}</p>
-                )}
+                {vet.description && <p className="text-sm text-muted-foreground leading-relaxed">{vet.description}</p>}
               </div>
             </div>
-
             {(vet.phone || vet.email) && (
               <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-4">
                 {vet.phone && (
                   <a href={`tel:${vet.phone}`} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    <Phone className="w-4 h-4 text-primary-400" />
-                    {vet.phone}
+                    <Phone className="w-4 h-4 text-primary-400" /> {vet.phone}
                   </a>
                 )}
                 {vet.email && (
                   <a href={`mailto:${vet.email}`} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    <Mail className="w-4 h-4 text-primary-400" />
-                    {vet.email}
+                    <Mail className="w-4 h-4 text-primary-400" /> {vet.email}
                   </a>
                 )}
               </div>
@@ -137,43 +177,33 @@ export default function VetDetailPage() {
               <h2 className="font-heading font-bold text-base text-foreground flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary-500" />
                 {t.vets.profile.rescuersTitle}
-                <span className="text-xs font-normal text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-                  {myRescuers.length}
-                </span>
+                <span className="text-xs font-normal text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{myRescuers.length}</span>
               </h2>
-              <button
-                onClick={() => { setJoinOpen(!joinOpen); setAddPetOpen(false) }}
-                className="flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
-              >
-                <UserPlus className="w-4 h-4" />
-                {t.vets.profile.joinButton}
-              </button>
+              {/* Botón unirse: solo para usuarios logueados */}
+              {isLoggedIn ? (
+                <button onClick={() => { setJoinOpen(!joinOpen); setAddPetOpen(false) }} className="flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
+                  <UserPlus className="w-4 h-4" /> {t.vets.profile.joinButton}
+                </button>
+              ) : (
+                <Link href="/login" className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary-600 transition-colors">
+                  <LogIn className="w-4 h-4" /> Inicia sesión para unirte
+                </Link>
+              )}
             </div>
 
-            {/* Join Form */}
-            {joinOpen && (
+            {/* Join Form — solo para logueados */}
+            {joinOpen && isLoggedIn && (
               <div className="bg-primary-50 border border-primary-100 rounded-2xl p-4 mb-3">
                 <h3 className="font-semibold text-foreground text-sm mb-3">{t.vets.join.subtitle(vet.name)}</h3>
                 <form onSubmit={handleJoin} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-foreground mb-1">{t.vets.join.name}</label>
-                      <input
-                        type="text"
-                        placeholder={t.vets.join.namePlaceholder}
-                        value={joinForm.name}
-                        onChange={e => setJoinForm(p => ({ ...p, name: e.target.value }))}
-                        required
-                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
-                      />
+                      <input type="text" placeholder={t.vets.join.namePlaceholder} value={joinForm.name} onChange={e => setJoinForm(p => ({ ...p, name: e.target.value }))} required className={inputCls} />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-foreground mb-1">{t.vets.join.role}</label>
-                      <select
-                        value={joinForm.role}
-                        onChange={e => setJoinForm(p => ({ ...p, role: e.target.value }))}
-                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                      >
+                      <select value={joinForm.role} onChange={e => setJoinForm(p => ({ ...p, role: e.target.value }))} className={inputCls}>
                         {Object.entries(t.vets.join.roles).map(([k, v]) => (
                           <option key={k} value={k}>{v as string}</option>
                         ))}
@@ -181,18 +211,10 @@ export default function VetDetailPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setJoinOpen(false)}
-                      className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
-                    >
+                    <button type="button" onClick={() => setJoinOpen(false)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
                       {t.vets.join.cancel}
                     </button>
-                    <button
-                      type="submit"
-                      disabled={joinLoading}
-                      className="flex-1 flex items-center justify-center gap-2 bg-gradient-amber text-white py-2.5 rounded-xl text-sm font-semibold shadow-warm disabled:opacity-70"
-                    >
+                    <button type="submit" disabled={joinLoading} className="flex-1 flex items-center justify-center gap-2 bg-gradient-amber text-white py-2.5 rounded-xl text-sm font-semibold shadow-warm disabled:opacity-70">
                       {joinLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       {joinLoading ? t.vets.join.submitting : t.vets.join.submit}
                     </button>
@@ -202,9 +224,7 @@ export default function VetDetailPage() {
             )}
 
             {myRescuers.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6 bg-white rounded-2xl border border-border">
-                {t.vets.profile.noRescuers}
-              </p>
+              <p className="text-sm text-muted-foreground text-center py-6 bg-white rounded-2xl border border-border">{t.vets.profile.noRescuers}</p>
             ) : (
               <div className="space-y-2">
                 {myRescuers.map(r => (
@@ -228,93 +248,50 @@ export default function VetDetailPage() {
               <h2 className="font-heading font-bold text-base text-foreground flex items-center gap-2">
                 <PawPrint className="w-4 h-4 text-primary-500" />
                 {t.vets.profile.petsTitle}
-                <span className="text-xs font-normal text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-                  {myPets.length}
-                </span>
+                <span className="text-xs font-normal text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">{myPets.length}</span>
               </h2>
-              <button
-                onClick={() => { setAddPetOpen(!addPetOpen); setJoinOpen(false) }}
-                className="flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                {t.vets.profile.addPetButton}
-              </button>
+              {/* Agregar mascota: solo admin */}
+              {isAdmin && (
+                <button onClick={() => { setAddPetOpen(!addPetOpen); setJoinOpen(false) }} className="flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
+                  <Plus className="w-4 h-4" /> {t.vets.profile.addPetButton}
+                </button>
+              )}
             </div>
 
-            {/* Add Pet Form */}
-            {addPetOpen && (
+            {/* Add Pet Form — solo admin */}
+            {addPetOpen && isAdmin && (
               <div className="bg-primary-50 border border-primary-100 rounded-2xl p-4 mb-3">
                 <h3 className="font-semibold text-foreground text-sm mb-3">{t.vets.addPet.subtitle(vet.name)}</h3>
                 <form onSubmit={handleAddPet} className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-foreground mb-1">{t.vets.addPet.name}</label>
-                      <input
-                        type="text"
-                        placeholder={t.vets.addPet.namePlaceholder}
-                        value={petForm.name}
-                        onChange={e => setPetForm(p => ({ ...p, name: e.target.value }))}
-                        required
-                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                      />
+                      <input type="text" placeholder={t.vets.addPet.namePlaceholder} value={petForm.name} onChange={e => setPetForm(p => ({ ...p, name: e.target.value }))} required className={inputCls} />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-foreground mb-1">{t.vets.addPet.species}</label>
-                      <select
-                        value={petForm.species}
-                        onChange={e => setPetForm(p => ({ ...p, species: e.target.value }))}
-                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                      >
-                        {speciesOptions.map(o => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
+                      <select value={petForm.species} onChange={e => setPetForm(p => ({ ...p, species: e.target.value }))} className={inputCls}>
+                        {speciesOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                       </select>
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1">{t.vets.addPet.age}</label>
-                    <input
-                      type="text"
-                      placeholder={t.vets.addPet.agePlaceholder}
-                      value={petForm.age_label}
-                      onChange={e => setPetForm(p => ({ ...p, age_label: e.target.value }))}
-                      required
-                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                    />
+                    <input type="text" placeholder={t.vets.addPet.agePlaceholder} value={petForm.age_label} onChange={e => setPetForm(p => ({ ...p, age_label: e.target.value }))} required className={inputCls} />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1">{t.vets.addPet.description}</label>
-                    <textarea
-                      placeholder={t.vets.addPet.descriptionPlaceholder}
-                      value={petForm.description}
-                      onChange={e => setPetForm(p => ({ ...p, description: e.target.value }))}
-                      rows={2}
-                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"
-                    />
+                    <textarea placeholder={t.vets.addPet.descriptionPlaceholder} value={petForm.description} onChange={e => setPetForm(p => ({ ...p, description: e.target.value }))} rows={2} className={cn(inputCls, 'resize-none')} />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground mb-1">{t.vets.addPet.photoUrl}</label>
-                    <input
-                      type="url"
-                      placeholder={t.vets.addPet.photoPlaceholder}
-                      value={petForm.photoUrl}
-                      onChange={e => setPetForm(p => ({ ...p, photoUrl: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                    />
+                    <input type="url" placeholder={t.vets.addPet.photoPlaceholder} value={petForm.photoUrl} onChange={e => setPetForm(p => ({ ...p, photoUrl: e.target.value }))} className={inputCls} />
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setAddPetOpen(false)}
-                      className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors"
-                    >
+                    <button type="button" onClick={() => setAddPetOpen(false)} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-secondary transition-colors">
                       {t.vets.addPet.cancel}
                     </button>
-                    <button
-                      type="submit"
-                      disabled={addPetLoading}
-                      className="flex-1 flex items-center justify-center gap-2 bg-gradient-amber text-white py-2.5 rounded-xl text-sm font-semibold shadow-warm disabled:opacity-70"
-                    >
+                    <button type="submit" disabled={addPetLoading} className="flex-1 flex items-center justify-center gap-2 bg-gradient-amber text-white py-2.5 rounded-xl text-sm font-semibold shadow-warm disabled:opacity-70">
                       {addPetLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       {addPetLoading ? t.vets.addPet.submitting : t.vets.addPet.submit}
                     </button>
@@ -324,9 +301,7 @@ export default function VetDetailPage() {
             )}
 
             {myPets.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6 bg-white rounded-2xl border border-border">
-                {t.vets.profile.noPets}
-              </p>
+              <p className="text-sm text-muted-foreground text-center py-6 bg-white rounded-2xl border border-border">{t.vets.profile.noPets}</p>
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {myPets.map(pet => (
@@ -342,23 +317,11 @@ export default function VetDetailPage() {
                     )}
                     <div className="p-3">
                       <p className="font-semibold text-sm text-foreground">{pet.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {(t.browse.speciesLabel as Record<string, string>)[pet.species]} · {pet.age_label}
-                      </p>
-                      {pet.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{pet.description}</p>
-                      )}
-                      <span className={cn(
-                        'inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border mt-2',
-                        pet.status === 'available'
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : 'bg-gray-50 text-gray-500 border-gray-200'
-                      )}>
-                        {pet.status === 'available' ? (
-                          <><CheckCircle2 className="w-3 h-3" /> {t.vets.profile.available}</>
-                        ) : (
-                          <><CheckCircle2 className="w-3 h-3" /> {t.vets.profile.adopted}</>
-                        )}
+                      <p className="text-xs text-muted-foreground">{(t.browse.speciesLabel as Record<string,string>)[pet.species]} · {pet.age_label}</p>
+                      {pet.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{pet.description}</p>}
+                      <span className={cn('inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border mt-2', pet.status === 'available' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200')}>
+                        <CheckCircle2 className="w-3 h-3" />
+                        {pet.status === 'available' ? t.vets.profile.available : t.vets.profile.adopted}
                       </span>
                     </div>
                   </div>
@@ -368,7 +331,6 @@ export default function VetDetailPage() {
           </section>
         </div>
       </main>
-
       <MobileNav />
     </div>
   )
