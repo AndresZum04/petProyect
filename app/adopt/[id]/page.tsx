@@ -16,12 +16,12 @@ import useVetStore from '@/store/useVetStore'
 import type { Pet } from '@/types'
 
 const schema = z.object({
-  full_name:    z.string().min(2, 'Name must be at least 2 characters'),
-  email:        z.string().email('Please enter a valid email'),
-  phone:        z.string().min(7, 'Please enter a valid phone number'),
-  housing_type: z.string().min(1, 'Please select your housing type'),
-  experience:   z.string().min(1, 'Please select your experience level'),
-  motivation:   z.string().min(20, 'Please share a bit more (at least 20 characters)'),
+  full_name:    z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  email:        z.string().email('Ingresa un correo electrónico válido'),
+  phone:        z.string().min(7, 'Ingresa un número de teléfono válido'),
+  housing_type: z.string().min(1, 'Selecciona tu tipo de vivienda'),
+  experience:   z.string().min(1, 'Selecciona tu nivel de experiencia'),
+  motivation:   z.string().min(20, 'Cuéntanos un poco más (mínimo 20 caracteres)'),
 })
 
 type FormData = z.infer<typeof schema>
