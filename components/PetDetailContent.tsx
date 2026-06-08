@@ -40,7 +40,7 @@ export default function PetDetailContent({ pet, story, rescueStory, healthNotes,
     <div className="min-h-dvh bg-background">
       <Navbar />
 
-      <main className="pt-16 pb-32 md:pb-16">
+      <main className="pt-16 pb-40 md:pb-16">
         <div className="max-w-2xl mx-auto px-4 mt-8">
           <Link href="/pets" className="inline-flex items-center gap-1.5 text-muted-foreground text-sm mb-6 hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4" /> {t.petDetail.backLink}
@@ -274,7 +274,7 @@ export default function PetDetailContent({ pet, story, rescueStory, healthNotes,
         </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden glass border-t border-border px-4 pb-safe">
+      <div className="fixed bottom-16 left-0 right-0 z-40 md:hidden bg-background/95 backdrop-blur border-t border-border px-4">
         <div className="py-3">
           {pet.status === 'available' ? (
             <Link href={`/adopt/${pet.id}`} className="w-full flex items-center justify-center gap-2 bg-gradient-amber text-white font-bold text-base py-4 rounded-xl shadow-warm-md">
