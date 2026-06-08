@@ -10,7 +10,7 @@ const DEMO_PETS: Record<string, Pet & { story: string; rescue_story: string; hea
     size: 'large', gender: 'female', status: 'available', special_needs: false,
     personality_tags: ['juguetona', 'cariñosa', 'energética', 'buena con niños', 'ama el agua'],
     photos: [
-      'https://images.unsplash.com/photo-1612940960267-26e9843ea1e8?w=800&q=80',
+      'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&q=80',
       'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80',
       'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&q=80',
     ],

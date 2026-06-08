@@ -14,7 +14,7 @@ import useDemoAuthStore from '@/store/useDemoAuthStore'
 import type { Pet } from '@/types'
 
 const DEMO_PETS: Pet[] = [
-  { id: 'demo-1', name: 'Luna', species: 'dog', breed: 'Golden Retriever Mix', age_label: '2 años', size: 'large', gender: 'female', status: 'available', special_needs: false, personality_tags: ['juguetona', 'cariñosa'], photos: ['https://images.unsplash.com/photo-1612940960267-26e9843ea1e8?w=200&q=80'], location: 'Ciudad de México', created_at: new Date().toISOString() },
+  { id: 'demo-1', name: 'Luna', species: 'dog', breed: 'Golden Retriever Mix', age_label: '2 años', size: 'large', gender: 'female', status: 'available', special_needs: false, personality_tags: ['juguetona', 'cariñosa'], photos: ['https://images.unsplash.com/photo-1552053831-71594a27632d?w=200&q=80'], location: 'Ciudad de México', created_at: new Date().toISOString() },
   { id: 'demo-2', name: 'Mochi', species: 'cat', breed: 'Doméstico de Pelo Corto', age_label: '1 año', size: 'small', gender: 'male', status: 'available', special_needs: false, personality_tags: ['curioso'], photos: ['https://images.unsplash.com/photo-1574158622682-e40e69881006?w=200&q=80'], location: 'Guadalajara', created_at: new Date().toISOString() },
   { id: 'demo-3', name: 'Bruno', species: 'dog', breed: 'Bulldog Francés', age_label: '4 años', size: 'small', gender: 'male', status: 'reserved', special_needs: true, personality_tags: ['calmado'], photos: ['https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=200&q=80'], location: 'Monterrey', created_at: new Date().toISOString() },
 ]

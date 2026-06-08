@@ -26,7 +26,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 const DEMO_PETS: Record<string, { name: string; photos: string[] }> = {
-  'demo-1': { name: 'Luna',  photos: ['https://images.unsplash.com/photo-1612940960267-26e9843ea1e8?w=400&q=80'] },
+  'demo-1': { name: 'Luna',  photos: ['https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&q=80'] },
   'demo-2': { name: 'Mochi', photos: ['https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&q=80'] },
   'demo-3': { name: 'Bruno', photos: ['https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&q=80'] },
   'demo-4': { name: 'Cleo',  photos: ['https://images.unsplash.com/photo-1533743983669-94fa5c4338ec?w=400&q=80'] },

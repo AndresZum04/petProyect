@@ -18,7 +18,7 @@ const DEMO_REQUESTS: AdoptionRequest[] = [
     id: 'req-1', pet_id: 'demo-1', full_name: 'Sofia Martinez', email: 'sofia@example.com', phone: '+1 555 1234',
     housing_type: 'house', experience: 'experienced', motivation: 'We have a big yard and lots of love to give. We had a Golden Retriever for 12 years and recently lost her.',
     status: 'pending', created_at: new Date(Date.now() - 3600000).toISOString(),
-    pets: { name: 'Luna', photos: ['https://images.unsplash.com/photo-1612940960267-26e9843ea1e8?w=100&q=80'] },
+    pets: { name: 'Luna', photos: ['https://images.unsplash.com/photo-1552053831-71594a27632d?w=100&q=80'] },
   },
   {
     id: 'req-2', pet_id: 'demo-2', full_name: 'Carlos Rivera', email: 'carlos@example.com', phone: '+1 555 5678',

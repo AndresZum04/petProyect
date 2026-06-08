@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Search, Heart, User, LayoutDashboard } from 'lucide-react'
+import { Home, Heart, User, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/hooks/useTranslations'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase'
@@ -37,10 +37,9 @@ export default function MobileNav() {
   const ProfileIcon = loggedIn && userRole === 'admin' ? LayoutDashboard : User
 
   const tabs = [
-    { href: '/',             icon: Home,        label: t.mobileNav.home,    active: pathname === '/' },
-    { href: '/pets',         icon: Search,      label: t.mobileNav.browse,  active: pathname.startsWith('/pets') },
-    { href: '/pets',         icon: Heart,       label: 'Adoptar',           active: false },
-    { href: profileHref,     icon: ProfileIcon, label: t.mobileNav.profile, active: profileActive },
+    { href: '/',         icon: Home,        label: t.mobileNav.home,    active: pathname === '/' },
+    { href: '/pets',     icon: Heart,       label: 'Adoptar',           active: pathname.startsWith('/pets') },
+    { href: profileHref, icon: ProfileIcon, label: t.mobileNav.profile, active: profileActive },
   ]
 
   return (
