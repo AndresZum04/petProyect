@@ -32,7 +32,7 @@ export default function LoginPage() {
     if (!isSupabaseConfigured) {
       await new Promise(r => setTimeout(r, 600))
       if (mode === 'register') {
-        toast.error('Registro no disponible en modo demo. Usa las credenciales de prueba.')
+        toast.error('El registro no está disponible en este momento.')
         setLoading(false)
         return
       }
@@ -76,7 +76,7 @@ export default function LoginPage() {
         router.refresh()
       }
     } catch (err: any) {
-      toast.error(err.message || 'Something went wrong')
+      toast.error(err.message || 'Algo salió mal. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -113,15 +113,6 @@ export default function LoginPage() {
           <p className="text-muted-foreground text-sm mb-6">
             {mode === 'login' ? t.login.signInSubtitle : t.login.registerSubtitle}
           </p>
-
-          {/* Demo credentials hint */}
-          {!isSupabaseConfigured && mode === 'login' && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mb-5 text-xs text-amber-800 space-y-1">
-              <p className="font-semibold">Cuentas de prueba:</p>
-              <p>👤 <strong>Admin:</strong> admin@demo.com / admin123</p>
-              <p>👤 <strong>Usuario:</strong> user@demo.com / user123</p>
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
