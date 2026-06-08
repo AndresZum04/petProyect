@@ -9,6 +9,7 @@ import type { Pet } from '@/types'
 interface PetCardProps {
   pet: Pet
   className?: string
+  href?: string
 }
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80'
@@ -19,7 +20,7 @@ const STATUS_STYLES: Record<Pet['status'], string> = {
   reserved:  'bg-amber-100 text-amber-700 border-amber-200',
 }
 
-export default function PetCard({ pet, className }: PetCardProps) {
+export default function PetCard({ pet, className, href }: PetCardProps) {
   const t = useTranslations()
   const photo = pet.avatar_url || pet.photos?.[0] || FALLBACK_IMAGE
   const statusLabel = (t.dashboard.statusValues as Record<string, string>)[pet.status] || pet.status
@@ -53,7 +54,7 @@ export default function PetCard({ pet, className }: PetCardProps) {
 
       {/* CTA */}
       <Link
-        href={`/pets/${pet.id}`}
+        href={href ?? `/pets/${pet.id}`}
         className="w-full flex items-center justify-center bg-gradient-amber text-white text-xs font-semibold px-4 py-2 rounded-full shadow-warm hover:shadow-warm-md transition-all mt-0.5"
       >
         Ver más

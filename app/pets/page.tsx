@@ -8,7 +8,10 @@ import PetCard from '@/components/PetCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase'
 import { useTranslations } from '@/hooks/useTranslations'
+import useVetStore from '@/store/useVetStore'
 import type { Pet } from '@/types'
+
+type PetWithHref = Pet & { _href?: string }
 
 const DEMO_PETS: Pet[] = [
   { id: 'demo-1', name: 'Luna', species: 'dog', breed: 'Golden Retriever Mix', age_label: '2 años', size: 'large', gender: 'female', status: 'available', special_needs: false, personality_tags: ['juguetona', 'cariñosa', 'energética'], photos: ['https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&q=80'], created_at: new Date().toISOString() },
@@ -35,7 +38,8 @@ function PetSkeleton() {
 
 export default function BrowsePage() {
   const t = useTranslations()
-  const [pets, setPets] = useState<Pet[]>([])
+  const { vetPets, vets } = useVetStore()
+  const [pets, setPets] = useState<PetWithHref[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [species, setSpecies] = useState('all')
@@ -102,8 +106,32 @@ export default function BrowsePage() {
     return () => clearTimeout(timer)
   }, [fetchPets])
 
-  function filterDemoPets(sp: string, sz: string, gn: string, q: string) {
-    return DEMO_PETS.filter(p => {
+  function filterDemoPets(sp: string, sz: string, gn: string, q: string): PetWithHref[] {
+    // Convertir vet pets a formato Pet con href personalizada
+    const vetPetsAsPets: PetWithHref[] = vetPets
+      .filter(vp => vp.status === 'available')
+      .map(vp => {
+        const vet = vets.find(v => v.id === vp.vet_id)
+        return {
+          id: vp.id,
+          name: vp.name,
+          species: vp.species,
+          age_label: vp.age_label,
+          status: 'available' as const,
+          special_needs: false,
+          photos: vp.photos || [],
+          avatar_url: vp.photos?.[0],
+          story: vp.description,
+          personality_tags: [],
+          location: vet?.name,
+          created_at: vp.created_at,
+          _href: `/vets/${vp.vet_id}/pets/${vp.id}`,
+        }
+      })
+
+    const allPets = [...DEMO_PETS, ...vetPetsAsPets]
+
+    return allPets.filter(p => {
       if (sp !== 'all' && p.species !== sp) return false
       if (sz !== 'all' && p.size !== sz) return false
       if (gn !== 'all' && p.gender !== gn) return false
@@ -209,7 +237,7 @@ export default function BrowsePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-            {pets.map(pet => <PetCard key={pet.id} pet={pet} />)}
+            {pets.map(pet => <PetCard key={pet.id} pet={pet} href={pet._href} />)}
           </div>
         )}
       </main>

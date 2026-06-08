@@ -305,7 +305,7 @@ export default function VetDetailPage() {
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {myPets.map(pet => (
-                  <div key={pet.id} className="bg-white rounded-2xl shadow-card overflow-hidden">
+                  <Link key={pet.id} href={`/vets/${id}/pets/${pet.id}`} className="bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-warm-md transition-all hover:-translate-y-0.5">
                     {pet.photos?.[0] ? (
                       <div className="relative aspect-[4/3] bg-secondary">
                         <Image src={pet.photos[0]} alt={pet.name} fill className="object-cover" sizes="(max-width: 768px) 50vw, 200px" />
@@ -319,12 +319,15 @@ export default function VetDetailPage() {
                       <p className="font-semibold text-sm text-foreground">{pet.name}</p>
                       <p className="text-xs text-muted-foreground">{(t.browse.speciesLabel as Record<string,string>)[pet.species]} · {pet.age_label}</p>
                       {pet.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{pet.description}</p>}
-                      <span className={cn('inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border mt-2', pet.status === 'available' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200')}>
-                        <CheckCircle2 className="w-3 h-3" />
-                        {pet.status === 'available' ? t.vets.profile.available : t.vets.profile.adopted}
-                      </span>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className={cn('inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border', pet.status === 'available' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200')}>
+                          <CheckCircle2 className="w-3 h-3" />
+                          {pet.status === 'available' ? t.vets.profile.available : t.vets.profile.adopted}
+                        </span>
+                        <span className="text-[10px] text-primary-500 font-semibold">Ver más →</span>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

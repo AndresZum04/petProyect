@@ -12,6 +12,7 @@ import Navbar from '@/components/Navbar'
 import MobileNav from '@/components/MobileNav'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase'
 import { useTranslations } from '@/hooks/useTranslations'
+import useVetStore from '@/store/useVetStore'
 import type { Pet } from '@/types'
 
 const schema = z.object({
@@ -36,6 +37,7 @@ const DEMO_PETS: Record<string, { name: string; photos: string[] }> = {
 export default function AdoptionFormPage() {
   const { id } = useParams<{ id: string }>()
   const t = useTranslations()
+  const { vetPets } = useVetStore()
   const [pet, setPet] = useState<{ name: string; photos?: string[] } | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -45,18 +47,25 @@ export default function AdoptionFormPage() {
   })
 
   useEffect(() => {
+    // Mascota de veterinaria (vet-[petId])
+    if (id?.startsWith('vet-')) {
+      const petId = id.replace('vet-', '')
+      const vetPet = vetPets.find(p => p.id === petId)
+      setPet(vetPet ? { name: vetPet.name, photos: vetPet.photos } : { name: 'Mascota', photos: [] })
+      return
+    }
     if (id?.startsWith('demo-')) {
-      setPet(DEMO_PETS[id] || { name: 'This pet', photos: [] })
+      setPet(DEMO_PETS[id] || { name: 'Mascota', photos: [] })
       return
     }
     if (!isSupabaseConfigured) {
-      setPet({ name: 'This pet', photos: [] })
+      setPet({ name: 'Mascota', photos: [] })
       return
     }
     const supabase = createClient()
     supabase.from('pets').select('name, photos').eq('id', id).single()
-      .then(({ data }) => setPet(data || { name: 'This pet', photos: [] }))
-  }, [id])
+      .then(({ data }) => setPet(data || { name: 'Mascota', photos: [] }))
+  }, [id, vetPets])
 
   const housingOptions = [
     { value: 'house',     label: t.adoptForm.housing.house },
@@ -74,15 +83,17 @@ export default function AdoptionFormPage() {
   const onSubmit = async (data: FormData) => {
     setSubmitting(true)
     try {
-      if (!id?.startsWith('demo-') && isSupabaseConfigured) {
+      const isVetPet = id?.startsWith('vet-')
+      const isDemoPet = id?.startsWith('demo-')
+      if (!isDemoPet && !isVetPet && isSupabaseConfigured) {
         const supabase = createClient()
         const { error } = await supabase.from('adoption_requests').insert({ pet_id: id, ...data })
         if (error) throw error
       }
-      await new Promise(r => setTimeout(r, 1000))
+      await new Promise(r => setTimeout(r, 800))
       setSubmitted(true)
     } catch {
-      toast.error('Something went wrong. Please try again.')
+      toast.error('Algo salió mal. Intenta de nuevo.')
     } finally {
       setSubmitting(false)
     }
