@@ -2,19 +2,45 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Search, Stethoscope, User } from 'lucide-react'
+import { Home, Search, Heart, User, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslations } from '@/hooks/useTranslations'
+import { createClient, isSupabaseConfigured } from '@/lib/supabase'
+import useDemoAuthStore from '@/store/useDemoAuthStore'
+import { useState, useEffect } from 'react'
 
 export default function MobileNav() {
   const pathname = usePathname()
   const t = useTranslations()
+  const { role: demoRole } = useDemoAuthStore()
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [loggedIn, setLoggedIn] = useState(false)
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoggedIn(!!demoRole)
+      setUserRole(demoRole)
+      return
+    }
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) { setLoggedIn(false); return }
+      setLoggedIn(true)
+      const { data: profile } = await supabase
+        .from('profiles').select('role').eq('id', data.user.id).single()
+      setUserRole(profile?.role || 'user')
+    })
+  }, [demoRole])
+
+  const profileHref = !loggedIn ? '/login' : userRole === 'admin' ? '/dashboard' : '/my-requests'
+  const profileActive = pathname.startsWith('/my-requests') || pathname.startsWith('/dashboard') || pathname === '/login'
+  const ProfileIcon = loggedIn && userRole === 'admin' ? LayoutDashboard : User
 
   const tabs = [
-    { href: '/',      icon: Home,         label: t.mobileNav.home,    active: pathname === '/' },
-    { href: '/pets',  icon: Search,       label: t.mobileNav.browse,  active: pathname.startsWith('/pets') },
-    { href: '/vets',  icon: Stethoscope,  label: t.mobileNav.vets,    active: pathname.startsWith('/vets') },
-    { href: '/login', icon: User,         label: t.mobileNav.profile, active: pathname.startsWith('/login') || pathname.startsWith('/dashboard') },
+    { href: '/',             icon: Home,        label: t.mobileNav.home,    active: pathname === '/' },
+    { href: '/pets',         icon: Search,      label: t.mobileNav.browse,  active: pathname.startsWith('/pets') },
+    { href: '/pets',         icon: Heart,       label: 'Adoptar',           active: false },
+    { href: profileHref,     icon: ProfileIcon, label: t.mobileNav.profile, active: profileActive },
   ]
 
   return (

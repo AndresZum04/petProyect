@@ -51,14 +51,19 @@ export default function LoginPage() {
     try {
       const supabase = createClient()
       if (mode === 'register') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: form.email,
           password: form.password,
           options: { data: { full_name: form.name } },
         })
         if (error) throw error
-        toast.success('¡Cuenta creada! Revisa tu email para confirmar.')
-        setMode('login')
+        toast.success('¡Bienvenido a PetConnect!')
+        if (data.session) {
+          router.push('/pets')
+        } else {
+          setMode('login')
+        }
+        return
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: form.email,
